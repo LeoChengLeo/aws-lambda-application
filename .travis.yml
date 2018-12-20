@@ -1,0 +1,64 @@
+language: java
+jdk:
+  - oraclejdk8
+    
+sudo: false
+    
+install: true
+    
+script:
+  - pwd
+  - ls -a
+  - echo secretKey=${secret_access_key} >> Csye6225Lambda/src/main/resources/AwsCredentials.properties
+  - echo accessKey=${access_key_id} >> Csye6225Lambda/src/main/resources/AwsCredentials.properties
+  - cat Csye6225Lambda/src/main/resources/AwsCredentials.properties
+  - cd Csye6225Lambda/
+  - pwd
+  - ls -a
+  - mvn clean
+  - mvn install -DskipTests=true
+  - cd target/
+  - pwd
+  - ls -a 
+  - cd ../../
+  - pwd
+  - ls -a
+    
+after_success:
+  - pwd
+  - ls -al
+  - cp Csye6225Lambda/target/Csye6225LambdaFunction-1.0-SNAPSHOT.jar .
+  - mkdir lambda_artifact
+  - ls -al
+  - cp Csye6225LambdaFunction-1.0-SNAPSHOT.jar lambda_artifact/
+  - ls -al
+  - pwd
+  - cd lambda_artifact
+  - ls -al
+  - pwd
+  - cd ..
+  - pwd
+  - ls -al
+    
+deploy:
+  - provider: s3
+    local_dir: lambda_artifact
+    bucket: $s3_bucket
+    region: us-east-1
+    skip_cleanup: true
+    access_key_id: $access_key_id
+    secret_access_key: $secret_access_key
+    
+  - provider: lambda
+    function_name: "Csye6225LambdaFunction"
+    region: "us-east-1"
+    role: $lambda_execuation_role
+    runtime: java8
+    zip: lambda_artifact/Csye6225LambdaFunction-1.0-SNAPSHOT.jar
+    memory_size: 1280
+    module_name: "myLambdaFunction"
+    handler_name: "Csye6225LambdaFunction::handleRequest"
+    access_key_id: $access_key_id
+    timeout: 300
+    secret_access_key: $secret_access_key
+
